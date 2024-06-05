@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Классификация данных</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+  }
+
+  h2 {
+    color: #444;
+  }
+
+  input[type="file"], button {
+    display: block;
+    margin: 20px 0;
+    padding: 10px;
+    font-size: 16px;
+  }
+
+  input[type="file"] {
+    width: 300px;
+    max-width: 100%;
+  }
+
+  button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #45a049;
+  }
+
+  #response {
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  #response img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  #resultsTable {
+    margin-top: 20px;
+    border-collapse: collapse;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  #resultsTable th, #resultsTable td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+
+  #resultsTable th {
+    background-color: #f2f2f2;
+    text-align: left;
+  }
+
+  #resultsTable tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+</style>
+</head>
+<body>
+<h2>Загрузите файл для классификации</h2>
+<input type="file" id="myFile">
+<button onclick="uploadFile()">Загрузить</button>
+
+<div id="response">
+    <img id="graphImage" style="display:none;">
+    <table id="resultsTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>Метод</th>
+                <th>Класс</th>
+                <th>Время выполнения (с)</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+function uploadFile() {
+  const file = document.getElementById('myFile').files[0];
+
+  if (file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch('/api/recognize', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Отобразить график
+      var graphImage = document.getElementById('graphImage');
+      graphImage.src = "data:image/png;base64," + data.image;
+      graphImage.style.display = 'block';
+
+      // Отобразить таблицу результатов
+      var resultsTable = document.getElementById('resultsTable');
+      var tbody = resultsTable.querySelector('tbody');
+      tbody.innerHTML = '';
+      data.results.forEach(result => {
+        var row = document.createElement('tr');
+        var methodCell = document.createElement('td');
+        methodCell.textContent = result.method;
+        row.appendChild(methodCell);
+
+        var classCell = document.createElement('td');
+        classCell.textContent = result.class;
+        row.appendChild(classCell);
+
+        var timeCell = document.createElement('td');
+        timeCell.textContent = result.time.toFixed(2);
+        row.appendChild(timeCell);
+        
+        tbody.appendChild(row);
+      });
+      resultsTable.style.display = 'block';
+    })
+    .catch(error => console.error('Ошибка:', error));
+  }
+}
+</script>
+</body>
+</html>
